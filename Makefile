@@ -15,7 +15,7 @@ build: ${BINARY_DIR} ## Compile the code, build Executable File
 	$(GOCMD) build -o $(BINARY_DIR) -v ./cmd/main.go
 
 run: ## Start application
-	$(GOCMD) run ./main.go
+	$(GOCMD) run cmd/main.go --config=./internal/config/local.yaml
 
 docker-dcp: ## Build a Docker Image
 	docker build -t oxeee/discount-code-bot .

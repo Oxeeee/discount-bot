@@ -7,7 +7,7 @@ import (
 
 type UsersRepo interface {
 	GetRoleByID(userID uint) (string, error)
-	Save(user *domain.User) error
+	SaveUser(user *domain.User) error
 	Update(userID uint, col string, data any) error
 	GetUserByID(userID uint) (*domain.User, error)
 	GetUserByUsername(username string) (*domain.User, error)
@@ -20,6 +20,7 @@ type UsersRepo interface {
 	}, error)
 	GetPlaces() ([]domain.Place, error)
 	SavePlaces(places []domain.Place) error
+	SaveCode(code *domain.DiscountCode) error
 }
 
 type userDatabase struct {
@@ -38,7 +39,7 @@ func (db *userDatabase) GetRoleByID(userID uint) (string, error) {
 	return role, nil
 }
 
-func (db *userDatabase) Save(user *domain.User) error {
+func (db *userDatabase) SaveUser(user *domain.User) error {
 	return db.DB.Model(&domain.User{}).Where("id = ?", user.ID).Save(user).Error
 }
 
@@ -99,4 +100,8 @@ func (db *userDatabase) GetPlaces() ([]domain.Place, error) {
 
 func (db *userDatabase) SavePlaces(places []domain.Place) error {
 	return db.DB.Model(&domain.Place{}).Save(places).Error
+}
+
+func (db *userDatabase) SaveCode(code *domain.DiscountCode) error {
+	return db.DB.Model(&domain.DiscountCode{}).Save(code).Error
 }

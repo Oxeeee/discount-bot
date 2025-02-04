@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math/rand/v2"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,6 +28,7 @@ type UserService interface {
 	GetUserByUsername(username string) (bool, *domain.User, error)
 	GetDiscountList() (string, error)
 	SaveDiscountList(csv string) error
+	GenerateCode(userID uint) (string, error)
 }
 
 type userService struct {
@@ -56,7 +59,7 @@ func (s *userService) CheckRole(userID uint, role domain.UserRole) (bool, error)
 }
 
 func (s *userService) RegisterUser(user *domain.User) error {
-	return s.repo.Save(user)
+	return s.repo.SaveUser(user)
 }
 
 func (s *userService) ChangeRole(userID uint, role string) error {
@@ -213,6 +216,21 @@ func (s *userService) SaveDiscountList(csvContent string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return s.repo.SavePlaces(places)
+}
+
+func (s *userService) GenerateCode(userID uint) (string, error) {
+	var code = domain.DiscountCode{
+		Code:    strconv.Itoa(rand.IntN(900000) + 100000),
+		UserID:  userID,
+		ExpDate: time.Now().Add(time.Minute * 15),
+	}
+
+	err := s.repo.SaveCode(&code)
+	if err != nil {
+		return "", err
+	}
+
+	return code.Code, nil
 }
