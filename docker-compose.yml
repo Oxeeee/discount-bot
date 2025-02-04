@@ -1,0 +1,11 @@
+services:
+  app:
+    image: oxeee/discount-code-bot:latest
+    container_name: discount_code
+    volumes:
+      - ./data:/app/data # Хранение SQLite-файла на хосте
+    # ports:
+    # - "3000:3000"
+    env_file:
+      - .env
+    restart: unless-stopped
