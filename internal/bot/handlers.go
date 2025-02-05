@@ -86,6 +86,8 @@ func (b *BotHandler) handleStartCommand(_ *BotHandler, message *tgbotapi.Message
 	newUser := domain.User{
 		ID:        uint(message.From.ID),
 		Username:  message.From.UserName,
+		FirstName: message.From.FirstName,
+		LastName:  message.From.LastName,
 		ChatID:    message.Chat.ID,
 		Role:      string(domain.UserRoleUser),
 		Whitelist: false,

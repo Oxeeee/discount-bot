@@ -21,6 +21,8 @@ type UsersRepo interface {
 	GetPlaces() ([]domain.Place, error)
 	SavePlaces(places []domain.Place) error
 	SaveCode(code *domain.DiscountCode) error
+	SaveCodeLog(log *domain.DiscountLog) error
+	DeactivateCode(code *domain.DiscountCode) error
 }
 
 type userDatabase struct {
@@ -104,4 +106,12 @@ func (db *userDatabase) SavePlaces(places []domain.Place) error {
 
 func (db *userDatabase) SaveCode(code *domain.DiscountCode) error {
 	return db.DB.Model(&domain.DiscountCode{}).Save(code).Error
+}
+
+func (db *userDatabase) SaveCodeLog(log *domain.DiscountLog) error {
+	return db.DB.Model(&domain.DiscountLog{}).Save(log).Error
+}
+
+func (db *userDatabase) DeactivateCode(code *domain.DiscountCode) error {
+	return db.DB.Model(&domain.DiscountCode{}).Where("id = ?", code.ID).Update("exp_date", code.ExpDate).Error
 }

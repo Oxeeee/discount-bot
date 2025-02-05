@@ -19,7 +19,7 @@ type UserService interface {
 	CheckRole(userId uint, role domain.UserRole) (bool, error)
 	RegisterUser(user *domain.User) error
 	GetUserByID(userID uint) (bool, *domain.User, error)
-	VerifyCode(code string) (bool, string, *domain.DiscountCode, error)
+	VerifyCode(code string, staffID uint) (bool, *domain.User, error)
 	GetUserRole(userID uint) (string, error)
 	CheckWhitelist(userID uint) (bool, error)
 	ManageWhitelist(username string, command string) error
@@ -79,24 +79,44 @@ func (s *userService) GetUserByID(userID uint) (bool, *domain.User, error) {
 	return true, user, err
 }
 
-func (s *userService) VerifyCode(code string) (bool, string, *domain.DiscountCode, error) {
+func (s *userService) VerifyCode(code string, staffID uint) (bool, *domain.User, error) {
 	codeInfo, err := s.repo.GetCodeInfoByCode(code)
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, "", nil, err
+		return false, nil, err
 	} else if err == gorm.ErrRecordNotFound {
-		return false, "", nil, nil
+		return false, nil, nil
 	}
 
 	if codeInfo.ExpDate.Before(time.Now()) {
-		return false, "", codeInfo, nil
+		return false, nil, nil
+	}
+
+	codeInfo.ExpDate = time.Date(2000, time.January, 01, 12, 00, 00, 00, time.UTC)
+	if err := s.repo.DeactivateCode(codeInfo); err != nil {
+		s.log.Error("error while deactiating code", "error", err)
 	}
 
 	user, err := s.repo.GetUserByID(codeInfo.UserID)
 	if err != nil {
-		return false, "", nil, err
+		return false, nil, err
 	}
 
-	return true, user.Username, codeInfo, nil
+	user.CodesUsed += 1
+	if err := s.repo.SaveUser(user); err != nil {
+		s.log.Error("error while saving count of used codes", "error", err, "user_id", user.ID)
+	}
+
+	codeLog := domain.DiscountLog{
+		UserID:  codeInfo.UserID,
+		StaffID: staffID,
+		UseTime: time.Now(),
+	}
+
+	if err := s.repo.SaveCodeLog(&codeLog); err != nil {
+		s.log.Error("error while saving code log", "error", err, "user_id", codeLog.UserID, "staff_id", codeLog.StaffID, "use_time", codeLog.UseTime)
+	}
+
+	return true, user, nil
 }
 
 func (s *userService) GetUserRole(userID uint) (string, error) {

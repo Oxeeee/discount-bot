@@ -6,8 +6,11 @@ type User struct {
 	ID        uint `gorm:"primaryKey"`
 	ChatID    int64
 	Username  string
+	FirstName string
+	LastName  string
 	Role      string `gorm:"default:'user'"`
 	Whitelist bool   `gorm:"default:false"`
+	CodesUsed uint
 }
 
 type DiscountCode struct {
@@ -18,10 +21,10 @@ type DiscountCode struct {
 }
 
 type DiscountLog struct {
-	ID      uint      `gorm:"primaryKey"`
-	UserID  uint      `gorm:"index"`
-	UseTime time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	PlaceID uint
+	ID      uint `gorm:"primaryKey"`
+	UserID  uint `gorm:"index"`
+	UseTime time.Time
+	StaffID uint
 }
 
 type Place struct {
