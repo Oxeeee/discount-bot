@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/Oxeeee/discont-bot/internal/domain"
@@ -20,20 +21,17 @@ func (b *BotHandler) handleCheckCodeButton(_ *BotHandler, message *tgbotapi.Mess
 
 func (b *BotHandler) handleCodeVerification(_ *BotHandler, message *tgbotapi.Message) {
 	code := message.Text
-	userRole, err := b.service.GetUserRole(uint(message.From.ID))
+
+	isValid, username, codeInfo, err := b.service.VerifyCode(code)
 	if err != nil {
-		b.log.Error("error while get user role", "error", err)
-	}
-	isValid, err := b.service.VerifyCode(code)
-	if err != nil {
-		b.sender.SendErrorMessage(message.Chat.ID, "Ошибка проверки кода", domain.UserRole(userRole))
+		b.sender.SendErrorMessage(message.Chat.ID, "Ошибка проверки кода", domain.UserRoleStaff)
 		b.updateUserKeyboard(message.Chat.ID, message.From.ID)
 		return
 	}
 	if isValid {
-		b.sender.SendTextMessage(message.Chat.ID, "✅ Код действителен!", domain.UserRole(userRole))
+		b.sender.SendTextMessage(message.Chat.ID, fmt.Sprintf("✅ Код действителен!\n Пользователь: %v\n Заканчивается в %v", username, codeInfo.ExpDate), domain.UserRoleStaff)
 	} else {
-		b.sender.SendTextMessage(message.Chat.ID, "❌ Код недействителен!", domain.UserRole(userRole))
+		b.sender.SendTextMessage(message.Chat.ID, "❌ Код недействителен!", domain.UserRoleStaff)
 	}
 	b.updateUserKeyboard(message.Chat.ID, message.From.ID)
 }

@@ -19,7 +19,7 @@ type UserService interface {
 	CheckRole(userId uint, role domain.UserRole) (bool, error)
 	RegisterUser(user *domain.User) error
 	GetUserByID(userID uint) (bool, *domain.User, error)
-	VerifyCode(code string) (bool, error)
+	VerifyCode(code string) (bool, string, *domain.DiscountCode, error)
 	GetUserRole(userID uint) (string, error)
 	CheckWhitelist(userID uint) (bool, error)
 	ManageWhitelist(username string, command string) error
@@ -79,19 +79,24 @@ func (s *userService) GetUserByID(userID uint) (bool, *domain.User, error) {
 	return true, user, err
 }
 
-func (s *userService) VerifyCode(code string) (bool, error) {
+func (s *userService) VerifyCode(code string) (bool, string, *domain.DiscountCode, error) {
 	codeInfo, err := s.repo.GetCodeInfoByCode(code)
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, err
+		return false, "", nil, err
 	} else if err == gorm.ErrRecordNotFound {
-		return false, nil
+		return false, "", nil, nil
 	}
 
 	if codeInfo.ExpDate.Before(time.Now()) {
-		return false, nil
+		return false, "", codeInfo, nil
 	}
 
-	return true, nil
+	user, err := s.repo.GetUserByID(codeInfo.UserID)
+	if err != nil {
+		return false, "", nil, err
+	}
+
+	return true, user.Username, codeInfo, nil
 }
 
 func (s *userService) GetUserRole(userID uint) (string, error) {
